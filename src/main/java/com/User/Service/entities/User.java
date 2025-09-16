@@ -1,8 +1,6 @@
 package com.User.Service.entities;
-
-import java.util.ArrayList;
+import java.util.ArrayList;  
 import java.util.List;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -10,10 +8,12 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -24,7 +24,7 @@ public class User {
 	@Id
 	private String userId;
 
-	@Column(name = "Names", length = 20, nullable = false)
+	@Column(name = "Names", nullable = false)
 	private String name;
 
 	@Column(name = "EMAILS", nullable = false)

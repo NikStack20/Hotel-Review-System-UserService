@@ -1,7 +1,5 @@
 package com.User.Service.GlobalExceptionHandler;
-
-import org.springframework.http.HttpStatus;
-
+import org.springframework.http.HttpStatus;  
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;

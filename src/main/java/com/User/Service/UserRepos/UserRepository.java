@@ -8,5 +8,7 @@ import com.User.Service.entities.User;
 @Repository
 public interface UserRepository extends JpaRepository<User, String> {
 
-	// using String BEcz of performance+enterprise-level
+	// Optional<User> findByEmail(String email);
+	boolean existsByEmail(String email);
+	// using String BEcz of performance
 }

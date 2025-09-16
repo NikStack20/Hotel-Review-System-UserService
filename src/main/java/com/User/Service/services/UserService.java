@@ -1,22 +1,22 @@
 package com.User.Service.services;
 
-import java.util.List;
+import java.util.List; 
 
-import com.User.Service.entities.User;
+import com.User.Service.loadouts.UserDto;
 
 public interface UserService {
 
 	// Creating User
-	User saveUser(User user);
+	UserDto saveUser(UserDto user);
 
 	// Get All USers
-	List<User> getAllUsers();
+	List<UserDto> getAllUsers();
 
 	// Get SIngle User with Id
-	User getUser(String userId);
+	UserDto getUser(String userId);
 
 	// Update User
-	User updateUser(User user, String userId);
+	UserDto updateUser(UserDto user, String userId);
 
 	// Delete User
 	void deleteUser(String userId);
