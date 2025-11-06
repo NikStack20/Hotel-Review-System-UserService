@@ -1,5 +1,5 @@
 package com.User.Service.entities;
-import java.util.ArrayList;  
+import java.util.ArrayList;      
 import java.util.List;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -8,12 +8,10 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
-
-@Getter
-@Setter
+ 
+@Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor

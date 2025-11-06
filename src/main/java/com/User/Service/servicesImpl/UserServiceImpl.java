@@ -1,17 +1,14 @@
 package com.User.Service.servicesImpl;
-
-import java.util.List;
+import java.util.List;       
 import java.util.UUID;
 import java.util.stream.Collectors;
-
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import com.User.Service.GlobalExceptionHandler.ConflictHandler;
 import com.User.Service.GlobalExceptionHandler.DBExceptions;
 import com.User.Service.UserRepos.UserRepository;
-import com.User.Service.entities.User;
+import com.User.Service.entities.*;
 import com.User.Service.loadouts.UserDto;
 import com.User.Service.services.UserService;
 
@@ -83,7 +80,10 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	public void deleteUser(String userId) {
-		this.userRepo.deleteById(userId);
+		
+		User user = this.userRepo.findById(userId)
+				.orElseThrow(() -> new DBExceptions("User with given userId:" + userId + ", not Found on server x_X"));
+		this.userRepo.delete(user);
 	}
 
 //	public boolean findByEmail(String email) {
@@ -93,3 +93,4 @@ public class UserServiceImpl implements UserService {
 //	}
 
 }
+
