@@ -1,5 +1,5 @@
 package com.User.Service.Controllers;
-import java.util.List; 
+import java.util.List;  
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -10,10 +10,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.User.Service.GlobalExceptionHandler.ApiResponse;
 import com.User.Service.loadouts.UserDto;
 import com.User.Service.services.UserService;
 
@@ -39,14 +36,14 @@ public class Controller {
 		return new ResponseEntity<UserDto>(this.userService.updateUser(userDto, userId), HttpStatus.OK);
 	}
 
-	// update
+	// getUser
 	@GetMapping("/getUser/{userId}")
 	public ResponseEntity<UserDto> getUser(@PathVariable String userId) {
 
 		return new ResponseEntity<UserDto>(this.userService.getUser(userId), HttpStatus.OK);
 	}
 
-	// update
+	// getAllUser
 	@GetMapping("/")
 	public ResponseEntity<List<UserDto>> getAllUser() {
 

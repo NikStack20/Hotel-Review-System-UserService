@@ -1,11 +1,12 @@
 package com.User.Service.Configurations;
 
-import org.modelmapper.ModelMapper; 
+import org.modelmapper.ModelMapper;  
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import lombok.Data;
-
+ 
 @Data
 @Configuration
 public class UserConfig {
@@ -14,5 +15,16 @@ public class UserConfig {
 	ModelMapper modelMapper() {
 		return new ModelMapper();
 	}
+	@Configuration
+	public class HttpClientConfig {
+
+	    @Bean
+	     WebClient webClient(WebClient.Builder builder) {
+	        return builder
+	                .baseUrl("http://localhost:7060")   // your rating service base
+	                .build();
+	    }
+	}
+
 
 }

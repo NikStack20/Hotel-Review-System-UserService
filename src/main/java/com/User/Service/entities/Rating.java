@@ -1,6 +1,6 @@
-package com.User.Service.entities;
+ package com.User.Service.entities;
 
-import lombok.AllArgsConstructor;
+import lombok.AllArgsConstructor; 
 import lombok.Data;
 import lombok.NoArgsConstructor;
 

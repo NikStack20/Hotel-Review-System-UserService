@@ -1,22 +1,32 @@
-package com.User.Service.servicesImpl;
-import java.util.List;       
+package com.User.Service.servicesImpl; 
+import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.modelmapper.ModelMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
+
 import com.User.Service.GlobalExceptionHandler.ConflictHandler;
 import com.User.Service.GlobalExceptionHandler.DBExceptions;
 import com.User.Service.UserRepos.UserRepository;
-import com.User.Service.entities.*;
+import com.User.Service.entities.User;
+import com.User.Service.loadouts.RatingDto;
 import com.User.Service.loadouts.UserDto;
 import com.User.Service.services.UserService;
-
+ 
 @Service
 public class UserServiceImpl implements UserService {
 
 	@Autowired
 	private UserRepository userRepo;
+	
+    private WebClient webClient; // Web-Client Bean Injection
+	
+	private Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
 
 	@Autowired
 	private ModelMapper modelMapper;
@@ -29,7 +39,6 @@ public class UserServiceImpl implements UserService {
 		if (userRepo.existsByEmail(user.getEmail())) {
 			throw new ConflictHandler("Email already registered: " + user.getEmail());
 		}
-
 		// 3) Generate ID if missing
 		if (user.getUserId() == null || user.getUserId().isBlank()) {
 			user.setUserId(UUID.randomUUID().toString());
@@ -38,7 +47,6 @@ public class UserServiceImpl implements UserService {
 		user.setName(user.getName());
 		user.setEmail(user.getEmail());
 		user.setAbout(user.getAbout());
-
 		User saved = this.userRepo.save(user);
 		return this.modelMapper.map(saved, UserDto.class);
 
@@ -54,15 +62,41 @@ public class UserServiceImpl implements UserService {
 		List<UserDto> userDtos = allUser.stream().map(user -> this.modelMapper.map(user, UserDto.class))
 				.collect(Collectors.toList());
 		return userDtos;
-	}
+	}	
 
-	@Override
-	public UserDto getUser(String userId) {
+    @Override
+    public UserDto getUser(String userId) {
 
-		User user = this.userRepo.findById(userId)
-				.orElseThrow(() -> new DBExceptions("User with given userId:" + userId + ", not Found on server x_X"));
-		return this.modelMapper.map(user, UserDto.class);
-	}
+        User user = userRepo.findById(userId)
+                .orElseThrow(() -> new DBExceptions("User with given userId: " + userId + " not found"));
+
+        // ---- Call Rating Service via WebClient ----
+        List<RatingDto> ratingDtos = webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/ratings/getAllByUserId/{userId}")
+                        .build(userId))
+                .retrieve()
+                .onStatus(HttpStatusCode::is4xxClientError,
+                        resp -> resp.bodyToMono(String.class)
+                                    .defaultIfEmpty("4xx from rating service")
+                                    .map(msg -> new RuntimeException("Rating 4xx: " + msg)))
+                .onStatus(HttpStatusCode::is5xxServerError,
+                        resp -> resp.bodyToMono(String.class)
+                                    .defaultIfEmpty("5xx from rating service")
+                                    .map(msg -> new RuntimeException("Rating 5xx: " + msg)))
+                .bodyToFlux(RatingDto.class)     // stream items
+                .collectList()                   // gather to List<RatingDto>
+                .timeout(java.time.Duration.ofSeconds(3))
+                .onErrorReturn(java.util.Collections.emptyList()) // graceful fallback
+                .block(); // convert reactive -> blocking for MVC service
+
+        logger.info("Ratings fetched for {} -> count: {}", userId, ratingDtos.size());
+
+        // Map user -> dto and attach ratings
+        UserDto dto = modelMapper.map(user, UserDto.class);
+        dto.setRatings(ratingDtos);
+        return dto;
+    }
 
 	@Override
 	public UserDto updateUser(UserDto userDto, String userId) {
