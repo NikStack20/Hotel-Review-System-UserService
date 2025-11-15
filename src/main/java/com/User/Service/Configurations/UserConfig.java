@@ -1,6 +1,6 @@
 package com.User.Service.Configurations;
 
-import org.modelmapper.ModelMapper;  
+import org.modelmapper.ModelMapper;   
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -16,7 +16,7 @@ public class UserConfig {
 		return new ModelMapper();
 	}
 	@Configuration
-	public class HttpClientConfig {
+	public class WebClientConfig {
 
 	    @Bean
 	     WebClient webClient(WebClient.Builder builder) {

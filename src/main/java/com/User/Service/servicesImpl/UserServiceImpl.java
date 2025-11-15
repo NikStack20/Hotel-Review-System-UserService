@@ -24,6 +24,7 @@ public class UserServiceImpl implements UserService {
 	@Autowired
 	private UserRepository userRepo;
 	
+	@Autowired
     private WebClient webClient; // Web-Client Bean Injection
 	
 	private Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
@@ -79,11 +80,11 @@ public class UserServiceImpl implements UserService {
                 .onStatus(HttpStatusCode::is4xxClientError,
                         resp -> resp.bodyToMono(String.class)
                                     .defaultIfEmpty("4xx from rating service")
-                                    .map(msg -> new RuntimeException("Rating 4xx: " + msg)))
+                                    .map(msg -> new DBExceptions("Rating 4xx: " + msg)))
                 .onStatus(HttpStatusCode::is5xxServerError,
                         resp -> resp.bodyToMono(String.class)
                                     .defaultIfEmpty("5xx from rating service")
-                                    .map(msg -> new RuntimeException("Rating 5xx: " + msg)))
+                                    .map(msg -> new DBExceptions("Rating 5xx: " + msg)))
                 .bodyToFlux(RatingDto.class)     // stream items
                 .collectList()                   // gather to List<RatingDto>
                 .timeout(java.time.Duration.ofSeconds(3))
