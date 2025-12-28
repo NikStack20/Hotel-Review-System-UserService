@@ -1,5 +1,4 @@
 package com.User.Service.loadouts;
-import java.util.ArrayList;
 import java.util.List;
 import jakarta.validation.constraints.Email;  
 import jakarta.validation.constraints.NotEmpty;
@@ -28,6 +27,6 @@ public class UserDto {
 	@Size(min = 10, message = "about must be atleast with 10 letters")
 	private String about;
 	
-	private List<RatingDto> ratings = new ArrayList<>();
+	private List<RatingDto> ratings;
 
 }

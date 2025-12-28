@@ -1,6 +1,7 @@
 package com.User.Service.entities;
-import java.util.ArrayList;      
+import java.util.ArrayList;       
 import java.util.List;
+import com.User.Service.loadouts.RatingDto;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -32,7 +33,7 @@ public class User {
 	private String about;
 
 	@Transient // Database X
-	private List<Rating> ratings = new ArrayList<>();
+	private List<RatingDto> ratings = new ArrayList<>();
 	// other entities
 
 }

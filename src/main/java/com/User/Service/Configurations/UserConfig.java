@@ -1,13 +1,9 @@
 package com.User.Service.Configurations;
-
-import org.modelmapper.ModelMapper;   
+import org.modelmapper.ModelMapper;  
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.reactive.function.client.WebClient;
-
-import lombok.Data;
  
-@Data
 @Configuration
 public class UserConfig {
 
@@ -18,10 +14,17 @@ public class UserConfig {
 	@Configuration
 	public class WebClientConfig {
 
-	    @Bean
-	     WebClient webClient(WebClient.Builder builder) {
+		@Bean("hotelWebClient")
+	     WebClient hotelWebClient(WebClient.Builder builder) {
 	        return builder
-	                .baseUrl("http://localhost:7060")   // your rating service base
+	                .baseUrl("http://HOTEL-SERVICE") // HOTEL service
+	                .build();
+	    }
+
+	    @Bean("ratingWebClient")
+	     WebClient ratingWebClient(WebClient.Builder builder) {
+	        return builder
+	                .baseUrl("http://RATING-SERVICE") // RATING service (if needed)
 	                .build();
 	    }
 	}

@@ -2,6 +2,8 @@ server:
   port: 7088
 
 spring:
+  application:
+    name: USER-SERVICE
   datasource:
     url: jdbc:mysql://localhost:3397/microservices?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC
     username: root
@@ -13,16 +15,14 @@ spring:
       ddl-auto: update   # <- DB entries auto update
     show-sql: true       # <- SQL true
     
-  application:
-      name: USER-SERVICE
     
-  eureka:
+eureka:
     instance:
       prefer-ip-address: true
     client:
-      fetch-registery: true
-      register-with-eureka: true
-      service-url:
-        defaultZone: http://localhost:8761/eureka
+     fetch-registry: true
+     register-with-eureka: true
+     service-url:
+      defaultZone: http://localhost:8761/eureka
   
 
