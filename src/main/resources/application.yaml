@@ -1,5 +1,5 @@
 server:
-  port: 7088
+  port: 7052
 
 spring:
   application:
@@ -9,20 +9,15 @@ spring:
     username: root
     password: 6969
     driver-class-name: com.mysql.cj.jdbc.Driver
+    
+  config:
+    import: optional:configserver:http://localhost:7054  # [optional] To get rid from application fallback.
+      
 
   jpa:
     hibernate:
       ddl-auto: update   # <- DB entries auto update
-    show-sql: true       # <- SQL true
-    
-    
-eureka:
-    instance:
-      prefer-ip-address: true
-    client:
-     fetch-registry: true
-     register-with-eureka: true
-     service-url:
-      defaultZone: http://localhost:8761/eureka
-  
+    show-sql: true       # <- SQL true 
+ # profiles:
+  #  active: prod
 

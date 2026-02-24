@@ -43,7 +43,7 @@ public class Controller {
 	}
 
 	// getAllUser
-	@GetMapping("/")
+	@GetMapping
 	public ResponseEntity<List<UserDto>> getAllUser() {
 
 		return new ResponseEntity<List<UserDto>>(this.userService.getAllUsers(), HttpStatus.OK);

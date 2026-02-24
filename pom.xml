@@ -88,6 +88,19 @@
       <artifactId>spring-boot-starter-test</artifactId>
       <scope>test</scope>
     </dependency>
+    <!--For Health Moitoring of Service-->
+    <dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-actuator</artifactId>
+   </dependency>
+   <!-- cloud-starter-config -->
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-config</artifactId>
+    <scope>compile</scope>
+</dependency>
+
+    
   </dependencies>
 
   <build>
