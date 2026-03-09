@@ -22,7 +22,7 @@ import com.User.Service.loadouts.UserDto;
 import com.User.Service.services.UserService;
 import com.User.Service.servicesImpl.UserServiceImpl;
 
-import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 import jakarta.validation.Valid;
 
 @RestController
@@ -52,16 +52,24 @@ public class Controller {
 
 	// getUser
 	// Configuring resilence4j for this controller with fallbackMethod
+
+	// Initialising retry
+	int retryCount = 1;
+
 	@GetMapping("/getUser/{userId}")
-	@CircuitBreaker(name = "ratingHotelBreaker", fallbackMethod = "ratingHotelFallback")
+//	@CircuitBreaker(name = "ratingHotelBreaker", fallbackMethod = "ratingHotelFallback")
+	@Retry(name = "ratingHotelService", fallbackMethod = "ratingHotelFallback")
 	public ResponseEntity<UserDto> getUser(@PathVariable String userId) {
 
+		logger.info("Retry count: {}", retryCount);
+		retryCount++;
 		return new ResponseEntity<UserDto>(this.userService.getUser(userId), HttpStatus.OK);
 	}
 
 	// Fallback for ratingHotelBreaker
 	public ResponseEntity<UserDto> ratingHotelFallback(String userId, Exception ex) {
-		logger.info("Fallback is executed because service is down : ", ex.getMessage());
+//		logger.info("Fallback is executed because service is down : ", ex.getMessage());
+
 		User user = User.builder().email(" xyz123@gmail.com ").name(" John Doe ")
 				.about("User field is shown with dummy fileds because some services are Down").userId("1234John")
 				.build();
