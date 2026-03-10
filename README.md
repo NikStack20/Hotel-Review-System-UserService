@@ -61,7 +61,7 @@ Running the Service
 
 Clone the repository:
 
-git clone <repository-url>
+git clone <https://github.com/NikStack20/Hotel-Review-System-UserService>
 
 Navigate to the project directory:
 
