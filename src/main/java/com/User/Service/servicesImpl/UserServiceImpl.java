@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
@@ -16,7 +15,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatusCode;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -29,8 +27,8 @@ import com.User.Service.loadouts.RatingDto;
 import com.User.Service.loadouts.UserDto;
 import com.User.Service.services.UserService;
 
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -39,8 +37,7 @@ public class UserServiceImpl implements UserService {
 	private UserRepository userRepo;
 
 	@Autowired
-	@Qualifier("hotelWebClient")
-	private WebClient hotelWebClient;
+	private HotelServiceClient hotelServiceClient;
 
 	@Autowired
 	@Qualifier("ratingWebClient")
@@ -84,8 +81,19 @@ public class UserServiceImpl implements UserService {
 		return userDtos;
 	}
 
+	// getUser
+	// Configuring resilence4j for this controller with fallbackMethod
+
+	// Initialising retry
+	int retryCount = 1;
+
 	@Override
+	@Retry(name = "ratingHotelService", fallbackMethod = "ratingHotelFallback")
+	@CircuitBreaker(name = "ratingHotelBreaker", fallbackMethod = "ratingHotelFallback")
 	public UserDto getUser(String userId) {
+
+		logger.info("Retry count: {}", retryCount);
+		retryCount++;
 
 		// 1️⃣ Fetch user from DB
 		User user = userRepo.findById(userId)
@@ -113,7 +121,7 @@ public class UserServiceImpl implements UserService {
 				.collect(Collectors.toSet());
 
 		// 4️⃣ Fetch hotels from HOTEL-SERVICE (batch)
-		Map<String, HotelDto> hotelMap = fetchHotelsForIds(hotelIds);
+		Map<String, HotelDto> hotelMap = hotelServiceClient.fetchHotelsForIds(hotelIds);
 
 		// 5️⃣ Attach hotel data to each rating
 		ratings.forEach(rating -> rating.setHotel(hotelMap.get(rating.getHotelId())));
@@ -123,38 +131,6 @@ public class UserServiceImpl implements UserService {
 		userDto.setRatings(ratings);
 
 		return userDto;
-	}
-
-	// 2nd SERVICE CALL to HOTEL SERVICE =======
-	private Map<String, HotelDto> fetchHotelsForIds(Set<String> hotelIds) {
-
-		if (hotelIds == null || hotelIds.isEmpty()) {
-			return Collections.emptyMap();
-		}
-
-		final int CONCURRENCY = 10;
-
-		try {
-			List<HotelDto> hotels = Flux.fromIterable(hotelIds)
-					.flatMap(hotelId -> hotelWebClient.get().uri("/hotels/getHotel/{hotelId}", hotelId)
-							.accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(HotelDto.class)
-							.timeout(Duration.ofSeconds(3)).onErrorResume(e -> {
-								logger.warn("Hotel fetch failed for hotelId {} : {}", hotelId, e.getMessage());
-								return Mono.empty();
-							}), CONCURRENCY)
-					.collectList().block();
-
-			if (hotels == null || hotels.isEmpty()) {
-				return Collections.emptyMap();
-			}
-
-			return hotels.stream().filter(h -> h.getHotelId() != null)
-					.collect(Collectors.toMap(HotelDto::getHotelId, Function.identity()));
-
-		} catch (Exception ex) {
-			logger.error("Failed to fetch hotels", ex);
-			return Collections.emptyMap();
-		}
 	}
 
 	@Override
