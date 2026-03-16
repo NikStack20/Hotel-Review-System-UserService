@@ -4,6 +4,16 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
+### Environment / Secrets ###
+.env
+.env.*
+*.env
+
+### Local configuration files ###
+application-local.yml
+application-dev.yml
+application-prod.yml
+
 ### STS ###
 .apt_generated
 .classpath
@@ -14,7 +24,7 @@ target/
 .sts4-cache
 
 ### IntelliJ IDEA ###
-.idea
+.idea/
 *.iws
 *.iml
 *.ipr
@@ -31,3 +41,11 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Logs ###
+logs/
+*.log
+
+### OS files ###
+.DS_Store
+Thumbs.db
