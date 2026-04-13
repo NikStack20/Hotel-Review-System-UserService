@@ -1,6 +1,5 @@
 package com.User.Service.servicesImpl;
 
-import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -13,10 +12,7 @@ import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
 
 import com.User.Service.GlobalExceptionHandler.ConflictHandler;
 import com.User.Service.GlobalExceptionHandler.DBExceptions;
@@ -40,8 +36,7 @@ public class UserServiceImpl implements UserService {
 	private HotelServiceClient hotelServiceClient;
 
 	@Autowired
-	@Qualifier("ratingWebClient")
-	private WebClient ratingWebClient; // Web-Client Bean Injection
+	private RatingClient ratingClient; // Web-Client Bean Injection
 
 	private Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
 
@@ -95,20 +90,18 @@ public class UserServiceImpl implements UserService {
 		logger.info("Retry count: {}", retryCount);
 		retryCount++;
 
-		// 1️⃣ Fetch user from DB
+		// Fetch user from DB
 		User user = userRepo.findById(userId)
 				.orElseThrow(() -> new DBExceptions("User with given userId: " + userId + " not found"));
 
 		// 1st SERVICE CALL to RATING SERVICE
-		List<RatingDto> ratings = ratingWebClient.get().uri("/ratings/getAllByUserId/{userId}", userId).retrieve()
-				.onStatus(HttpStatusCode::is4xxClientError,
-						resp -> resp.bodyToMono(String.class)
-								.map(msg -> new DBExceptions("Rating service 4xx error: " + msg)))
-				.onStatus(HttpStatusCode::is5xxServerError,
-						resp -> resp.bodyToMono(String.class)
-								.map(msg -> new DBExceptions("Rating service 5xx error: " + msg)))
-				.bodyToFlux(RatingDto.class).timeout(Duration.ofSeconds(3)).collectList()
-				.doOnError(e -> logger.error("Error while calling Rating-Service", e)).block();
+		List<RatingDto> ratings;
+		try {
+			ratings = ratingClient.getRatings(userId);
+		} catch (Exception e) {
+			logger.error("Error while calling Rating-Service", e);
+			ratings = Collections.emptyList();
+		}
 
 		if (ratings == null || ratings.isEmpty()) {
 			ratings = Collections.emptyList();
@@ -116,17 +109,15 @@ public class UserServiceImpl implements UserService {
 
 		logger.info("Ratings fetched for user {} : {}", userId, ratings.size());
 
-		// 3️⃣ Extract hotelIds from ratings
+		// 2nd SERVICE CALL to HOTEL SERVICE
+		// Extract hotelIds from ratings and Fetch hotels from HOTEL-SERVICE (batch)
 		Set<String> hotelIds = ratings.stream().map(RatingDto::getHotelId).filter(Objects::nonNull)
 				.collect(Collectors.toSet());
 
-		// 4️⃣ Fetch hotels from HOTEL-SERVICE (batch)
 		Map<String, HotelDto> hotelMap = hotelServiceClient.fetchHotelsForIds(hotelIds);
 
-		// 5️⃣ Attach hotel data to each rating
 		ratings.forEach(rating -> rating.setHotel(hotelMap.get(rating.getHotelId())));
 
-		// 6️⃣ Build final UserDto response
 		UserDto userDto = modelMapper.map(user, UserDto.class);
 		userDto.setRatings(ratings);
 
@@ -169,10 +160,11 @@ public class UserServiceImpl implements UserService {
 		this.userRepo.delete(user);
 	}
 
-//	public boolean findByEmail(String email) {
-//		Optional<User> user = this.userRepo.findByEmail(email);
-//		return user.isPresent();
-//
-//	}
+	/*
+	 * public boolean findByEmail(String email) { Optional<User> user =
+	 * this.userRepo.findByEmail(email); return user.isPresent();
+	 * 
+	 * }
+	 */
 
 }
