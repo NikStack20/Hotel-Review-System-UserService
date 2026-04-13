@@ -110,7 +110,6 @@ public class UserServiceImpl implements UserService {
 		logger.info("Ratings fetched for user {} : {}", userId, ratings.size());
 
 		// 2nd SERVICE CALL to HOTEL SERVICE
-		// Extract hotelIds from ratings and Fetch hotels from HOTEL-SERVICE (batch)
 		Set<String> hotelIds = ratings.stream().map(RatingDto::getHotelId).filter(Objects::nonNull)
 				.collect(Collectors.toSet());
 

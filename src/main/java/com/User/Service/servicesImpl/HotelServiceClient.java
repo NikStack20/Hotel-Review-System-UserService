@@ -1,37 +1,26 @@
 package com.User.Service.servicesImpl;
 
-import java.time.Duration;
 import java.util.Collections;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
 
 import com.User.Service.loadouts.HotelDto;
 
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.github.resilience4j.retry.annotation.Retry;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 @Service
 public class HotelServiceClient {
 
 	@Autowired
-	@Qualifier("hotelWebClient")
-	private WebClient hotelWebClient;
+	private HotelClient hotelClient;
 
 	private Logger logger = org.slf4j.LoggerFactory.getLogger(HotelServiceClient.class);
-
-	// Applied Retry+Rate-limiter for hotelService Protection
 
 	@Retry(name = "userHotelService", fallbackMethod = "userHotelFallback")
 	@RateLimiter(name = "userRateLimiter", fallbackMethod = "userHotelFallback")
@@ -41,36 +30,22 @@ public class HotelServiceClient {
 			return Collections.emptyMap();
 		}
 
-		final int CONCURRENCY = 10;
+		Map<String, HotelDto> hotelMap = new HashMap<>();
 
-		try {
-			List<HotelDto> hotels = Flux.fromIterable(hotelIds)
-					.flatMap(hotelId -> hotelWebClient.get().uri("/hotels/getHotel/{hotelId}", hotelId)
-							.accept(MediaType.APPLICATION_JSON).retrieve().bodyToMono(HotelDto.class)
-							.timeout(Duration.ofSeconds(3)).onErrorResume(e -> {
-								logger.warn("Hotel fetch failed for hotelId {} : {}", hotelId, e.getMessage());
-								return Mono.empty();
-							}), CONCURRENCY)
-					.collectList().block();
-
-			if (hotels == null || hotels.isEmpty()) {
-				return Collections.emptyMap();
+		for (String hotelId : hotelIds) {
+			try {
+				HotelDto hotel = hotelClient.getHotel(hotelId);
+				hotelMap.put(hotelId, hotel);
+			} catch (Exception e) {
+				logger.warn("Hotel fetch failed for hotelId {} : {}", hotelId, e.getMessage());
 			}
-
-			return hotels.stream().filter(h -> h.getHotelId() != null)
-					.collect(Collectors.toMap(HotelDto::getHotelId, Function.identity()));
-
-		} catch (Exception ex) {
-			logger.error("Failed to fetch hotels", ex);
-			return Collections.emptyMap();
 		}
+
+		return hotelMap;
 	}
 
-	// Fallback for ratingHotelBreaker
 	public Map<String, HotelDto> userHotelFallback(Set<String> hotelIds, Throwable ex) {
-//		logger.info("Fallback is executed because service is down : ", ex.getMessage());
 		logger.error("Fallback triggered for hotel service: {}", ex.getMessage());
 		return Collections.emptyMap();
 	}
-
 }
