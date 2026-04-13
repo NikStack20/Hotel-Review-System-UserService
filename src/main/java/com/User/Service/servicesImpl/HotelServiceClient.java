@@ -8,7 +8,6 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -16,9 +15,7 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import com.User.Service.entities.User;
 import com.User.Service.loadouts.HotelDto;
-import com.User.Service.loadouts.UserDto;
 
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.github.resilience4j.retry.annotation.Retry;
@@ -32,15 +29,12 @@ public class HotelServiceClient {
 	@Qualifier("hotelWebClient")
 	private WebClient hotelWebClient;
 
-	@Autowired
-	private ModelMapper modelMapper;
-
 	private Logger logger = org.slf4j.LoggerFactory.getLogger(HotelServiceClient.class);
 
 	// Applied Retry+Rate-limiter for hotelService Protection
 
-	@Retry(name = "ratingHotelService", fallbackMethod = "ratingHotelFallback")
-	@RateLimiter(name = "userRateLimiter", fallbackMethod = "ratingHotelFallback")
+	@Retry(name = "userHotelService", fallbackMethod = "userHotelFallback")
+	@RateLimiter(name = "userRateLimiter", fallbackMethod = "userHotelFallback")
 	public Map<String, HotelDto> fetchHotelsForIds(Set<String> hotelIds) {
 
 		if (hotelIds == null || hotelIds.isEmpty()) {
@@ -73,13 +67,10 @@ public class HotelServiceClient {
 	}
 
 	// Fallback for ratingHotelBreaker
-	public UserDto ratingHotelFallback(String userId, Exception ex) {
+	public Map<String, HotelDto> userHotelFallback(Set<String> hotelIds, Throwable ex) {
 //		logger.info("Fallback is executed because service is down : ", ex.getMessage());
-
-		User user = User.builder().email(" xyz123@gmail.com ").name(" John Doe ")
-				.about("User field is shown with dummy fileds because some services are Down").userId("1234John")
-				.build();
-		return modelMapper.map(user, UserDto.class);
+		logger.error("Fallback triggered for hotel service: {}", ex.getMessage());
+		return Collections.emptyMap();
 	}
 
 }

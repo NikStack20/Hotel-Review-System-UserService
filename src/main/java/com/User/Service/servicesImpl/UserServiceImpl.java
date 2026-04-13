@@ -133,6 +133,20 @@ public class UserServiceImpl implements UserService {
 		return userDto;
 	}
 
+	public UserDto ratingHotelFallback(String userId, Throwable ex) {
+
+		logger.error("Fallback triggered in UserService: {}", ex.getMessage());
+
+		User user = User.builder().email("xyz123@gmail.com").name("John Doe")
+				.about("Some services are down, fallback response").userId("fallback-id").build();
+
+		UserDto userDto = modelMapper.map(user, UserDto.class);
+
+		userDto.setRatings(Collections.emptyList());
+
+		return userDto;
+	}
+
 	@Override
 	public UserDto updateUser(UserDto userDto, String userId) {
 		User user = this.modelMapper.map(userDto, User.class);
